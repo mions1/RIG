@@ -92,5 +92,23 @@ class Job():
 	
 		return setup_time
 		
+	@staticmethod
+	def get_processing_time_avg(jobs: list):
+		""" Restituisco la media dei processing time dei jobs.
+	    	Usata per calcolare, ad es, ATCS
+
+		Args:
+			jobs (list): lista di jobs
+
+		Returns:
+			float: media dei processing time dei jobs passati
+		"""
+
+		total_processing_time = 0
+		for job in jobs:
+			total_processing_time += job._processing_time
+			
+		return total_processing_time/len(jobs)					
+		
 	def __str__(self):
 		return str(self._id_number)+"\t"+str(self._processing_time)+"\t"+str(self._due_date)

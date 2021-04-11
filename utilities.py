@@ -22,3 +22,23 @@ def print_schedule_d(machines, lvl):
 				for j in k._jobs:
 					print(j)
 				print("")
+
+def print_schedule_detailed(machines):
+	print("--------------- Dettaglio -----------------")
+	for k in machines:
+		prev_job = None
+		c_t = 0
+		print("Machine #"+str(k))
+		print("Job #\tSetup time\tInizio a\tFine a\tTardiness")
+		for j in k._jobs:
+			c_t += Job.get_setup_time(prev_job, j)
+			print(j._id_number, end="\t\t")
+			print(Job.get_setup_time(prev_job, j), end="\t")
+			print(c_t, end="\t\t")
+			c_t += j._processing_time
+			print(c_t, end="\t")
+			print(max(c_t-j._due_date, 0), end="\n")
+			prev_job = j
+		
+		print("Total tardiness: ", k.get_total_tardiness())
+	print("-------------------------------------------")

@@ -32,3 +32,21 @@ class Spec():
 		self._name = name
 		self._value = value
 		self._setup_time = setup_time
+
+	@staticmethod
+	def get_setup_time_avg(setup_times: dict):
+		""" Ritorna la media dei setup times.
+			Funzione utilizzata per calcolare, ad es, ATCS index
+
+			Args:
+				setup_time (dict):
+
+			Returns:
+				float: la media dei dei setup times
+		"""
+
+		total_setup_time = 0
+		for setup_time in setup_times.values():
+			total_setup_time += setup_time
+		
+		return total_setup_time/len(setup_times)
