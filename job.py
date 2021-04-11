@@ -42,6 +42,23 @@ class Job():
 				max_j = job
 		
 		return max_j
+	
+	@staticmethod
+	def get_job_with_id(jobs: list, id: int):
+		""" Restituisce il job che ha l'identificativo selezionato
+
+		Args:
+			jobs (list): lista dei jobs
+			id (int): identificativo selezionato
+
+		Returns:
+			Job: restituisce il job selezionato. None se non c'è nella lista
+		"""
+
+		for job in jobs:
+			if job._id_number == id:
+				return job
+		return None
 
 	@staticmethod
 	def get_min_due_date(jobs: list):
@@ -135,7 +152,6 @@ class Job():
 						break
 						
 		return na
-					
 		
 	def __str__(self):
 		return str(self._id_number)+"\t"+str(self._processing_time)+"\t"+str(self._due_date)

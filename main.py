@@ -261,10 +261,144 @@ def APD(jobs, setup_times):
 
 	return apd
 
+# ------------ Scheduler 3 - ATCS_APD + Greedy -------
+def RIG(jobs, machines, setup_times, l_max=100000):
+	""" Scheduler Random Iterated Greedy.
+	    Utilizza l'ATCS_APD insieme ad una metauristica Greedy per trovare
+		una soluzione ottima
+
+	Args:
+		jobs (list): lista dei jobs
+		machines (list): lista delle macchine
+		setup_times (list): lista dei setup times
+		l_max (int, optional): iterazioni massime. Defaults to 100000.
+
+	Returns:
+		list: lista delle macchine con lo scheduler aggiornato
+	"""
+	EDD_m(jobs, machines)
+	ATCS_APD(jobs, machines, setup_times)
+
+	tardiness_iniziale = max(Machine.get_total_tardiness_per_machine(machines))
+	switch = False
+	l = 0
+	best_sol = [tardiness_iniziale, machines]
+	while l < l_max:
+		# scambio a caso due jobs
+		if switch:
+			tardiness_now = max(Machine.get_total_tardiness_per_machine(machines))
+			if tardiness_now < best_sol[0]:
+				best_sol[0] = tardiness_now
+				best_sol[1] = deepcopy(machines)
+				if tardiness_now == 52:
+					return best_sol
+
+		if not switch:
+			Machine.exchange_jobs(machines)
+			l += 1
+
+		#print(l/l_max*100,"%")
+		desc_type = randint(1,2)
+		cons_type = randint(1,3)
+		job = descruction(desc_type, machines)
+		new_xes = construction(cons_type, job, machines)
+		switch, machines = movement(machines, new_xes)
+
+	print("Tardinss iniziale: ", tardiness_iniziale)
+	return best_sol
+
+def descruction(desc_type, machines):
+
+	if desc_type == 1:
+		# seleziono a random un job dalla macchina con max Cmax
+		max_c_machine = Machine.get_machine_with_max_c(machines)
+		return max_c_machine.get_random_job()	
+
+	elif desc_type == 2:
+		# seleziono a random un job da tutte le macchine
+		return Machine.get_random_job_among_all(machines)
+
+def construction(cons_type, job: Job, machines):
+	# appendi tutte le macchine, sono solo quella modificata
+
+	new_xes = []
+	if cons_type == 1:
+		# inserisci il job in qualunque posizione della macchina dalla quale viene
+		for k in machines:
+			if k.is_job_of_this_machine(job):
+				for pos in range(len(k._jobs)):
+					all_m = [machine for machine in machines if machine != k]
+					tmp_cpy = deepcopy(k)
+					j = Job.get_job_with_id(tmp_cpy._jobs, job._id_number)
+					tmp_cpy._jobs.remove(j)
+					tmp_cpy._jobs.insert(pos, j)
+					all_m.append(tmp_cpy)
+					new_xes.append(all_m)
+				
+				return new_xes
+
+	elif cons_type == 2:
+		# inserisci il job in tutte le posizione della macchina dalla quale viene e dalla macchina col minor Cmax
+		k_min_c = Machine.get_machine_with_min_c(machines)
+		for k in machines:
+			if k.is_job_of_this_machine(job):
+				for pos in range(len(k._jobs)):
+					all_m = [machine for machine in machines if machine != k]
+					tmp_cpy = deepcopy(k)
+					j = Job.get_job_with_id(tmp_cpy._jobs, job._id_number)
+					tmp_cpy._jobs.remove(j)
+					tmp_cpy._jobs.insert(pos, j)
+					all_m.append(tmp_cpy)
+					new_xes.append(all_m)
+				if k != k_min_c:
+					for pos in range(len(k_min_c._jobs)):
+						all_m = [machine for machine in machines if machine != k_min_c]
+						tmp_cpy = deepcopy(k_min_c)
+						if job in tmp_cpy._jobs:
+							tmp_cpy._jobs.remove(job)
+						tmp_cpy._jobs.insert(pos, job)
+						all_m.append(tmp_cpy)
+						new_xes.append(all_m)
+				return new_xes
+
+	elif cons_type == 3:
+		# inserisci il job in tutte le posizioni di tutte le macchine
+		for k in machines:
+			for pos in range(len(k._jobs)):
+				all_m = [machine for machine in machines if machine != k]
+				tmp_cpy = deepcopy(k)
+				if job in tmp_cpy._jobs:
+					tmp_cpy._jobs.remove(job)
+				tmp_cpy._jobs.insert(pos, job)
+				all_m.append(tmp_cpy)
+				new_xes.append(all_m)
+			
+		return new_xes		
+
+def movement(old_x, new_xes):
+	old_tardiness = []
+	for k in old_x:
+		old_tardiness.append(k.get_total_tardiness())
+
+	best_tard = max(old_tardiness)
+	best_sched = old_x
+	for new_x in new_xes:
+		new_x_tardiness = []
+		for k in new_x:
+			new_x_tardiness.append(k.get_total_tardiness())
+		new_x_tardiness = max(new_x_tardiness)
+		if new_x_tardiness < best_tard:
+			best_tard = new_x_tardiness
+			best_sched = new_x
+	
+	changed = True if best_tard != max(old_tardiness) else False
+
+	return changed, best_sched
+	
 
 from datas import setup_times, specs_list, jobs, machines
 
-which_scheds = 2
+which_scheds = 3
 
 if which_scheds in [-1, 0]:
 # ------------------------SCHEDULING CORRENTE----------------------------------
@@ -324,4 +458,20 @@ if which_scheds in [-1, 2]:
 	print("Risultato per scheduling con ATCS_APD")
 	print_schedule(machines_1)
 	tardiness = Machine.get_total_tardiness_per_machine(machines_1)
+	print("Tardiness totale: ", str(max(tardiness)))
+
+if which_scheds in [-1, 3]:
+# ------------------------SCHEDULING CON GREEDY e APD_ATCS------------------------------
+	# scheduling con GREEDY e APD_ATCS - prendo dati
+	jobs_2 = deepcopy(jobs)
+	machines_2 = deepcopy(machines)
+	setup_times_2 = deepcopy(setup_times)
+
+	print("------ Scheduler 3 - APD_ATCS + GREEDY ----------")
+	# Calcolo le soluzioni con Random Iterated Greedy (RIG)
+	sol = RIG(jobs_2, machines_2, setup_times_2, l_max=100)
+
+	print("Risultato per scheduling con ATCS_APD + GREEDY")
+	print_schedule(sol[1])
+	tardiness = Machine.get_total_tardiness_per_machine(sol[1])
 	print("Tardiness totale: ", str(max(tardiness)))
