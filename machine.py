@@ -84,6 +84,33 @@ class Machine():
 			
 		return tardiness
 
+	
+	@staticmethod
+	def get_machine_with_min_c(machines: list):
+		""" Ritorna la macchina col completition time più basso tra quelle passate.
+			Vedere get_free_time()
+
+		Args:
+			machines (list): lista di macchine
+
+		Returns:
+			Machine: macchina col completition time minore
+		"""
+		
+		min_c_machines = dict()
+		for k in machines:
+			# per ogni macchina, calcolo il completition time (aka quando si libera)
+			min_c_machines[k] = k.get_free_time()
+
+		# ordino le macchine in ordine crescente per il completition time e restituisco
+		# la prima, poiché sarà quella col completition time più basso
+		min_c_machines = dict(sorted(min_c_machines.items(), key=lambda item: item[1]))
+		for k,v in min_c_machines.items():
+			min_c_machine = k
+			break
+		
+		return min_c_machine
+
 	@staticmethod
 	def first_machine_avaible(machines: list):
 		""" Ritorna la prima macchina che si libera.
@@ -112,5 +139,38 @@ class Machine():
 		
 		return min_k
 		
+	@staticmethod
+	def free_machine_at_t(machines: list, t: int):
+		""" Restituisce la macchina libera al tempo t.
+		    Se più di una, restituisce quella con meno jobs.
+			Vedere get_free_time()
+
+		Args:
+			machines (list): lista di macchine
+			t (int): tempo
+
+		Returns:
+			Machine: macchina libera al tempo t
+		"""
+
+		processing_time_per_machine = dict()
+		
+		for k in machines:
+			# per ogni macchina calcolo il completition time (aka quando si libera)
+			processing_time_per_machine[k] = k.get_free_time()
+
+		# salvo in free_machines la lista delle macchine che sono libere al tempo t
+		free_machines = []
+		for k in machines:
+			if t >= processing_time_per_machine[k]:
+				free_machines.append(k)
+
+		# se ce ne sono una o più, restituisco quella che finisce prima
+		if free_machines:
+			return Machine.get_machine_with_min_c(free_machines)
+
+		# se non ce ne sono di libere al tempo t, restituisco quella che si libera prima
+		return Machine.first_machine_avaible(machines)
+
 	def __str__(self):
 		return str(self._id_number)

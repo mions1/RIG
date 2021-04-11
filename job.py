@@ -108,7 +108,34 @@ class Job():
 		for job in jobs:
 			total_processing_time += job._processing_time
 			
-		return total_processing_time/len(jobs)					
+		return total_processing_time/len(jobs)
+		
+	@staticmethod
+	def get_Na(job, jobs: list, spec_name: str):
+		""" Restituisce il numero di jobs che hanno il valore della spec "spec_name" 
+			uguale al valore della stessa specifica in "job".
+			Usato per calcolare APD.
+
+		Args:
+			job (Job): job di riferimento
+			jobs (list): lista di jobs da confrontare
+			spec_name (str): nome della specifica selezionata
+
+		Returns:
+			int: numero di jobs che hanno stesso valore di spec_name di job
+		"""
+		
+		na = 0
+		for j in jobs:
+			if j != job:
+				for i in range(len(job._specs)):
+					if job._specs[i]._name == spec_name:
+						if job._specs[i]._value == j._specs[i]._value:
+							na += 1
+						break
+						
+		return na
+					
 		
 	def __str__(self):
 		return str(self._id_number)+"\t"+str(self._processing_time)+"\t"+str(self._due_date)
